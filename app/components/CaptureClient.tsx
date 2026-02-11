@@ -176,9 +176,10 @@ export default function CapturePage() {
         {!loading && !displayedImage && !showCamera && (
           <button
             onClick={() => setShowCamera(true)}
+            disabled={uploading}
             className="w-full max-w-sm bg-blue-600 text-white text-lg font-semibold py-4 rounded"
           >
-            CLICK PICTURE
+            {uploading ? "UPLOADING..." : "CLICK PICTURE"}
           </button>
         )}
       </main>
