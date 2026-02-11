@@ -105,7 +105,7 @@ export default function CapturePage() {
 
             <button
               onClick={() => setShowCamera(true)}
-              className="w-full bg-gray-200 py-3 rounded font-semibold"
+              className="w-full bg-gray-200 py-3 rounded font-semibold mb-4"
             >
               TAKE NEW PHOTO
             </button>
