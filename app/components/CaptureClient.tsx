@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import Header from "../components/ui/Header";
@@ -11,6 +11,7 @@ const videoConstraints = {
 };
 
 export default function CapturePage() {
+  const router= useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "HKYTH7L";
 
@@ -18,6 +19,7 @@ export default function CapturePage() {
 
   const [qrResponse, setQrResponse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [showCamera, setShowCamera] = useState(false);
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
@@ -29,16 +31,24 @@ export default function CapturePage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/v1/get-qr/${code}/`,
         );
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          throw new Error(
+            errorData?.message || `Request failed with status ${res.status}`,
+          );
+        }
+
         const data = await res.json();
         setQrResponse(data);
-      } catch (err) {
-        console.error("QR fetch failed", err);
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQRData();
+    if (code) fetchQRData();
   }, [code]);
 
   function base64ToBlob(base64: string): Blob {
@@ -75,16 +85,36 @@ export default function CapturePage() {
         },
       );
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(
+          errorData?.message || `Upload Failed with status ${res.status}`,
+        );
+      }
+
       const data = await res.json();
       setQrResponse(data);
       setUploadedPhoto(imageSrc);
-    } catch (err) {
-      console.error("Upload failed", err);
+    } catch (err: any) {
+      setError(err.message || "Upload Failed");
     }
   }, [code]);
 
   const backendImage = qrResponse?.picture;
   const displayedImage = backendImage ?? uploadedPhoto;
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
+          <h2 className="text-2xl font-bold">{error}</h2>
+          <button className="bg-red-600 text-white p-3 rounded font-semibold" onClick={() => router.push("/")}>Try Again</button>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
