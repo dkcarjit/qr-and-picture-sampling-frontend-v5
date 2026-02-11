@@ -11,14 +11,15 @@ const videoConstraints = {
 };
 
 export default function CapturePage() {
-  const router= useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "HKYTH7L";
 
   const webcamRef = useRef<Webcam>(null);
 
   const [qrResponse, setQrResponse] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
   const [showCamera, setShowCamera] = useState(false);
@@ -65,11 +66,21 @@ export default function CapturePage() {
     return new Blob([array], { type: mime });
   }
 
+  const stopCamera = () => {
+    const stream = webcamRef.current?.video?.srcObject as MediaStream | null;
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+  };
+
   const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (!imageSrc) return;
 
+    stopCamera();
     setShowCamera(false);
+    setUploading(true);
 
     const blob = base64ToBlob(imageSrc);
 
@@ -97,8 +108,16 @@ export default function CapturePage() {
       setUploadedPhoto(imageSrc);
     } catch (err: any) {
       setError(err.message || "Upload Failed");
+    } finally {
+      setUploading(false);
     }
   }, [code]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const backendImage = qrResponse?.picture;
   const displayedImage = backendImage ?? uploadedPhoto;
@@ -109,7 +128,12 @@ export default function CapturePage() {
         <Header />
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
           <h2 className="text-2xl font-bold">{error}</h2>
-          <button className="bg-red-600 text-white p-3 rounded font-semibold" onClick={() => router.push("/")}>Try Again</button>
+          <button
+            className="bg-red-600 text-white p-3 rounded font-semibold"
+            onClick={() => router.push("/")}
+          >
+            Try Again
+          </button>
         </div>
         <Footer />
       </>
@@ -118,8 +142,6 @@ export default function CapturePage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {!showCamera && <Header />}
-
       <main className="flex-1 flex flex-col items-center justify-center px-4 gap-6 pb-16">
         <h1 className="text-2xl font-bold">{code}</h1>
 
@@ -127,17 +149,26 @@ export default function CapturePage() {
 
         {!loading && displayedImage && !showCamera && (
           <div className="w-full max-w-sm space-y-4">
-            <img
-              src={displayedImage}
-              alt="QR Image"
-              className="w-full rounded border"
-            />
+            <div className="relative">
+              <img
+                src={displayedImage}
+                alt="QR Image"
+                className="w-full rounded border"
+              />
+
+              {uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded">
+                  <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
 
             <button
               onClick={() => setShowCamera(true)}
-              className="w-full bg-gray-200 py-3 rounded font-semibold mb-4"
+              disabled={uploading}
+              className="w-full bg-gray-200 py-3 rounded font-semibold mb-4 disabled:opacity-50"
             >
-              TAKE NEW PHOTO
+              {uploading ? "UPLOADING..." : "TAKE NEW PHOTO"}
             </button>
           </div>
         )}
@@ -163,6 +194,31 @@ export default function CapturePage() {
             videoConstraints={videoConstraints}
             className="w-full h-full object-cover"
           />
+
+          <div className="absolute top-8 left-8 w-full flex justify-start">
+            <button
+              onClick={() => {
+                stopCamera();
+                setShowCamera(false);
+              }}
+              className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
 
           <div className="absolute bottom-8 w-full flex justify-center">
             <button
