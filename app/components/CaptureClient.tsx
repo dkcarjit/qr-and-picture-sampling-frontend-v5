@@ -27,7 +27,7 @@ export default function CapturePage() {
       try {
         setLoading(true);
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/get-qr/${code}/`
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/get-qr/${code}/`,
         );
         const data = await res.json();
         setQrResponse(data);
@@ -41,22 +41,38 @@ export default function CapturePage() {
     fetchQRData();
   }, [code]);
 
+  function base64ToBlob(base64: string): Blob {
+    const [meta, data] = base64.split(",");
+    const mime = meta.match(/:(.*?);/)?.[1] || "image/jpeg";
+
+    const binary = atob(data);
+    const array = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+      array[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([array], { type: mime });
+  }
+
   const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (!imageSrc) return;
 
     setShowCamera(false);
 
+    const blob = base64ToBlob(imageSrc);
+
+    const formData = new FormData();
+    formData.append("picture", blob, "capture.jpg");
+
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/upload-qr-image/${code}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/update-picture/${code}/`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ image: imageSrc }),
-        }
+          body: formData,
+        },
       );
 
       const data = await res.json();
@@ -87,14 +103,12 @@ export default function CapturePage() {
               className="w-full rounded border"
             />
 
-            {!backendImage && (
-              <button
-                onClick={() => setShowCamera(true)}
-                className="w-full bg-gray-200 py-3 rounded font-semibold"
-              >
-                RETAKE
-              </button>
-            )}
+            <button
+              onClick={() => setShowCamera(true)}
+              className="w-full bg-gray-200 py-3 rounded font-semibold"
+            >
+              TAKE NEW PHOTO
+            </button>
           </div>
         )}
 
