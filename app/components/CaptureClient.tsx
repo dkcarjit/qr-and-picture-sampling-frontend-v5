@@ -90,7 +90,7 @@ export default function CapturePage() {
     <div className="min-h-screen bg-white flex flex-col">
       {!showCamera && <Header />}
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 gap-6 pb-16">
         <h1 className="text-2xl font-bold">{code}</h1>
 
         {loading && <p className="text-gray-500">Loading...</p>}
