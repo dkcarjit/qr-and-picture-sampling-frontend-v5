@@ -95,16 +95,17 @@ const Page = () => {
         <div className="max-w-7xl mx-auto space-y-20">
           {error && <p className="text-center text-red-500">{error}</p>}
 
-          {items.map((item) => (
+          {items.map((item, idx ) => (
             <div
               key={item.id}
               className="flex flex-col lg:flex-row items-start"
             >
               <div className="w-full lg:w-1/3">
                 <div
-                  className="relative w-full h-52 overflow-hidden rounded-2xl cursor-pointer"
+                  className="relative w-full h-52 overflow-hidden rounded-2xl cursor-pointer flex items-center"
                   onClick={() => setSelectedImage(item.src)}
                 >
+                  <span className="text-3xl font-bold"> {idx + 1}</span>
                   <Image
                     src={item.src}
                     alt="preview"
