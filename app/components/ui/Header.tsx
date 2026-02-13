@@ -3,8 +3,9 @@ import { useRouter } from "next/navigation";
 
 const Header = () => {
   const router = useRouter();
+
   return (
-    <header className="h-12 bg-blue-500 text-white flex items-center justify-between px-3">
+    <header className="sticky top-0 z-40 h-12 bg-blue-500 text-white flex items-center justify-between px-3 shadow-md">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-1 text-sm font-medium"
