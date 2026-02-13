@@ -20,7 +20,7 @@ const Page = () => {
       setLoading(true);
       setError("");
 
-      const res = await api.get("/api/v1/list-qr/");
+      const res = await api.get("/v1/list-qr/");
 
       const formatted: ImageItem[] = res.data
         .filter((item: ApiItem) => item.picture !== null)
@@ -64,7 +64,7 @@ const Page = () => {
       if (!original || original.styleName === trimmedValue) return;
 
       try {
-        await api.post("/api/v1/update-style-number/", {
+        await api.post("/v1/update-style-number/", {
           id,
           style_number: trimmedValue,
         });
