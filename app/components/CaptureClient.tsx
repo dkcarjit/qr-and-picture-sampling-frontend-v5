@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState, useCallback, useEffect } from "react";
-import Webcam from "react-webcam";
+import { useRef, useState, useEffect } from "react";
 import Header from "../components/ui/Header";
 import Footer from "../components/ui/Footer";
+import { Flashlight } from "lucide-react";
 
-const videoConstraints = {
-  facingMode: "environment",
+type TorchConstraint = MediaTrackConstraintSet & {
+  torch?: boolean;
 };
 
 export default function CapturePage() {
@@ -15,15 +15,17 @@ export default function CapturePage() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "HKYTH7L";
 
-  const webcamRef = useRef<Webcam>(null);
-
   const [qrResponse, setQrResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
   const [showCamera, setShowCamera] = useState(false);
-  const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+  // const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const [torchOn, setTorchOn] = useState(false);
 
   useEffect(() => {
     const fetchQRData = async () => {
@@ -52,37 +54,80 @@ export default function CapturePage() {
     if (code) fetchQRData();
   }, [code]);
 
-  function base64ToBlob(base64: string): Blob {
-    const [meta, data] = base64.split(",");
-    const mime = meta.match(/:(.*?);/)?.[1] || "image/jpeg";
-
-    const binary = atob(data);
-    const array = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-      array[i] = binary.charCodeAt(i);
-    }
-
-    return new Blob([array], { type: mime });
-  }
-
   const stopCamera = () => {
-    const stream = webcamRef.current?.video?.srcObject as MediaStream | null;
-
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
   };
 
-  const capture = useCallback(async () => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (!imageSrc) return;
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { exact: "environment" },
+        },
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      setError(
+        err.message ||
+          "Unable to access camera. Please allow camera permissions and try again.",
+      );
+    }
+  };
+
+  const toggleTorch = async () => {
+    if (!streamRef.current) return;
+
+    const track = streamRef.current.getVideoTracks()[0];
+    const capabilities = track.getCapabilities() as any;
+
+    if (!capabilities.torch) {
+      alert("Torch is not supported on this device.");
+      return;
+    }
+
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: !torchOn } as TorchConstraint],
+      });
+      setTorchOn(!torchOn);
+    } catch (err) {
+      console.error("Torch error:", err);
+    }
+  };
+
+  const capture = async () => {
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0);
+
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg"),
+    );
+
+    if (!blob) return;
 
     stopCamera();
     setShowCamera(false);
     setUploading(true);
-
-    const blob = base64ToBlob(imageSrc);
 
     const formData = new FormData();
     formData.append("picture", blob, "capture.jpg");
@@ -105,13 +150,13 @@ export default function CapturePage() {
 
       const data = await res.json();
       setQrResponse(data);
-      setUploadedPhoto(imageSrc);
+      // setUploadedPhoto(imageSrc);
     } catch (err: any) {
       setError(err.message || "Upload Failed");
     } finally {
       setUploading(false);
     }
-  }, [code]);
+  };
 
   useEffect(() => {
     return () => {
@@ -120,7 +165,8 @@ export default function CapturePage() {
   }, []);
 
   const backendImage = qrResponse?.picture;
-  const displayedImage = backendImage ?? uploadedPhoto;
+  const displayedImage = backendImage;
+  // const displayedImage = backendImage ?? uploadedPhoto;
 
   if (error) {
     return (
@@ -164,7 +210,10 @@ export default function CapturePage() {
             </div>
 
             <button
-              onClick={() => setShowCamera(true)}
+              onClick={() => {
+                setShowCamera(true);
+                startCamera();
+              }}
               disabled={uploading}
               className="w-full bg-gray-200 py-3 rounded font-semibold mb-4 disabled:opacity-50"
             >
@@ -188,12 +237,11 @@ export default function CapturePage() {
 
       {showCamera && (
         <div className="fixed inset-0 z-50 bg-black">
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/jpeg"
-            videoConstraints={videoConstraints}
+          <video
+            ref={videoRef}
             className="w-full h-full object-cover"
+            playsInline
+            autoPlay
           />
 
           <div className="absolute top-8 left-8 w-full flex justify-start">
@@ -218,6 +266,15 @@ export default function CapturePage() {
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
+            </button>
+          </div>
+
+          <div className="absolute top-8 right-8">
+            <button
+              className="p-3 bg-black/40 rounded-full text-white"
+              onClick={toggleTorch}
+            >
+              <Flashlight />
             </button>
           </div>
 

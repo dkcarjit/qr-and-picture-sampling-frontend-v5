@@ -135,7 +135,7 @@ const Page = () => {
 
       {selectedImage && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6"
+          className="fixed inset-0 z-100 bg-black/80 flex items-center justify-center p-6"
           onClick={() => setSelectedImage(null)}
         >
           <div
