@@ -166,7 +166,7 @@ export default function CapturePage() {
             <button
               onClick={() => setShowCamera(true)}
               disabled={uploading}
-              className="w-full bg-gray-200 py-3 rounded font-semibold mb-4 disabled:opacity-50"
+              className="w-full bg-gray-200 py-3 rounded font-semibold mb-14 disabled:opacity-50"
             >
               {uploading ? "UPLOADING..." : "TAKE NEW PHOTO"}
             </button>
