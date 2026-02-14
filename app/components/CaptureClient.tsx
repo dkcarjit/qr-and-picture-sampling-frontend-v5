@@ -25,12 +25,35 @@ export default function CapturePage() {
   const [showCamera, setShowCamera] = useState(false);
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
 
+  const [authorized, setAuthorized] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/");
+    } else {
+      setToken(token);
+      setAuthorized(true);
+    }
+  }, [router]);
+
   useEffect(() => {
     const fetchQRData = async () => {
+      console.log("Fetching QR data for code:", code);
+      if (!token) return;
+
       try {
         setLoading(true);
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/v1/get-qr/${code}/`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Token ${token}`,
+            },
+          },
         );
 
         if (!res.ok) {
@@ -49,8 +72,10 @@ export default function CapturePage() {
       }
     };
 
-    if (code) fetchQRData();
-  }, [code]);
+    if (authorized && token && code) {
+      fetchQRData();
+    }
+  }, [authorized, token, code]);
 
   function base64ToBlob(base64: string): Blob {
     const [meta, data] = base64.split(",");
@@ -92,6 +117,9 @@ export default function CapturePage() {
         `${process.env.NEXT_PUBLIC_API_URL}/v1/update-picture/${code}/`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Token ${token}`,
+          },
           body: formData,
         },
       );
@@ -111,7 +139,7 @@ export default function CapturePage() {
     } finally {
       setUploading(false);
     }
-  }, [code]);
+  }, [code, token]);
 
   useEffect(() => {
     return () => {
@@ -121,6 +149,8 @@ export default function CapturePage() {
 
   const backendImage = qrResponse?.picture;
   const displayedImage = backendImage ?? uploadedPhoto;
+
+  if (!authorized) return "Loading...";
 
   if (error) {
     return (
