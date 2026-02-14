@@ -1,5 +1,3 @@
-"use client";
-
 import UpdateStyleNumber from "../components/UpdateStyleNumber/UpdateStyleNumber";
 
 const Page = () => {

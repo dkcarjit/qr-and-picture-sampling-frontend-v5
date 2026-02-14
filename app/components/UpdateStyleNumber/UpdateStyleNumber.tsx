@@ -1,3 +1,5 @@
+"use client";
+
 import { ImageItem, ApiItem } from "@/app/types/type";
 import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,46 +30,46 @@ const UpdateStyleNumber = () => {
     }
   }, [router]);
 
-  const handleFetch = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/list-qr/`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!res.ok) {
-        throw new Error("List fetch failed");
-      }
-
-      const data = await res.json();
-
-      const formatted: ImageItem[] = data
-        .filter((item: ApiItem) => item.picture !== null)
-        .map((item: ApiItem) => ({
-          id: item.id,
-          src: item.picture!,
-          styleName: item.style_number || "",
-        }));
-
-      setItems(formatted);
-      setOriginalItems(formatted);
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load QR list");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const handleFetch = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/list-qr/`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error("List fetch failed");
+        }
+
+        const data = await res.json();
+
+        const formatted: ImageItem[] = data
+          .filter((item: ApiItem) => item.picture !== null)
+          .map((item: ApiItem) => ({
+            id: item.id,
+            src: item.picture!,
+            styleName: item.style_number || "",
+          }));
+
+        setItems(formatted);
+        setOriginalItems(formatted);
+      } catch (err: any) {
+        console.error(err);
+        setError("Failed to load QR list");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     handleFetch();
   }, []);
 
@@ -96,6 +98,7 @@ const UpdateStyleNumber = () => {
           {
             method: "POST",
             headers: {
+              "Content-Type": "application/json",
               Authorization: `Token ${token}`,
             },
             body: JSON.stringify({
@@ -140,15 +143,16 @@ const UpdateStyleNumber = () => {
             >
               <div className="w-full lg:w-1/3">
                 <div
-                  className="relative w-full h-52 overflow-hidden rounded-2xl cursor-pointer flex items-center"
+                  className="relative w-full h-48 overflow-hidden cursor-pointer flex items-center"
                   onClick={() => setSelectedImage(item.src)}
                 >
-                    <span className="text-3xl font-bold mr-4"> {idx + 1}</span>
-                    <img
-                      src={item.src}
-                      className="object-contain transition-transform duration-700"
-                      alt="preview"
-                    />
+                  <span className="text-3xl font-bold mr-4"> {idx + 1}</span>
+                
+                  <img
+                    src={item.src}
+                    className="object-contain transition-transform duration-700"
+                    alt="preview"
+                  />
                 </div>
               </div>
 
@@ -172,7 +176,7 @@ const UpdateStyleNumber = () => {
 
       {selectedImage && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6"
+          className="fixed inset-0 z-100 bg-black/80 flex items-center justify-center p-6"
           onClick={() => setSelectedImage(null)}
         >
           <div
