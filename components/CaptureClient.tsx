@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
-import Header from "../components/ui/Header";
-import Footer from "../components/ui/Footer";
+import Header from "./ui/Header";
+import Footer from "./ui/Footer";
 
 const videoConstraints = {
   facingMode: "environment",

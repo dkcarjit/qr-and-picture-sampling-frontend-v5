@@ -1,20 +1,11 @@
-// import UpdateStyleNumber from "../components/UpdateStyleNumber/UpdateStyleNumber";
-
-// const Page = () => {
-//   return <UpdateStyleNumber />;
-// };
-
-// export default Page;
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Header from "../components/ui/Header";
-import Footer from "../components/ui/Footer";
+import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
 import Image from "next/image";
-import api from "@/app/lib/axios";
-import Loader from "../components/ui/Loader";
-import { ApiItem, ImageItem } from "../types/type";
+import Loader from "@/components/ui/Loader";
+import { ApiItem, ImageItem } from "@/types/type";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
@@ -66,6 +57,10 @@ const Page = () => {
           id: item.id,
           src: item.picture!,
           styleName: item.style_number || "",
+          createdAt: item.created_at ||"",
+          updatedAT: item.updated_at ||"",
+          createdBy: item.created_by || null,
+          updatedBy: item.updated_by || null,
         }));
 
       setItems(formatted);

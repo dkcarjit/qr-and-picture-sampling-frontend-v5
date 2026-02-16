@@ -1,6 +1,6 @@
 "use client";
 
-import QrScanner from "./components/QRScanner";
+import QrScanner from "../components/QRScanner";
 
 export default function QRScanner() {
   return (

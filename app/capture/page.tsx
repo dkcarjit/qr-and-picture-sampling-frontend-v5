@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import CaptureClient from "../components/CaptureClient";
+import CaptureClient from "@/components/CaptureClient";
 
 export default function Page() {
   return (
